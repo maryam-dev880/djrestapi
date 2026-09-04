@@ -57,6 +57,15 @@ A simple frontend is included in the `frontend/` folder (`index.html`). It lets 
 
 To use it, open `frontend/index.html` directly in a browser while the Django development server is running.
 
+## Screenshots
+
+**Login Page**
+
+![Login Page](screenshots/login.png)
+
+**Task List**
+
+![Task List](screenshots/tasks.png)
 ## Author
 
 **Maryam**

@@ -130,8 +130,7 @@ function loadTasks() {
     return response.json();
   })
   .then(function(data) {
-    const tasks = data.results;
-    renderTasks(tasks);
+    renderTasks(data);
   });
 }
 

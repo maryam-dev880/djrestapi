@@ -3,11 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Task
 from .serializers import TaskSerializer
-from .pagination import TaskPagination
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
-    pagination_class = TaskPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description']
 
