@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Manager</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  input, textarea, button {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+  }
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+  }
+  button:hover {
+  background: #1e40af;
+  transform: scale(1.02);
+  transition: all 0.2s;
+}
+button {
+  transition: all 0.2s;
+}
+input:hover, textarea:hover, select:hover {
+  border-color: #2563eb;
+}
+  h1 {
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Task Manager</h1>
+<div id="login-section">
+  <h3>Login</h3>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <div id="login-error" style="color:red;"></div>
+</div>
+
+<div id="app" style="display:none;">
+
+  <h3>Add New Task</h3>
+  <input id="new-title" placeholder="Title (min 5 characters)">
+  <textarea id="new-description" placeholder="Description"></textarea>
+  <button onclick="createTask()">Add Task</button>
+  <div id="create-error" style="color:red;"></div>
+
+  <h3>Search</h3>
+  <input id="search-box" placeholder="Search tasks..." oninput="loadTasks()">
+
+  <h3>Your Tasks</h3>
+  <div id="task-list">Loading...</div>
+
+  <button onclick="logout()">Logout</button>
+
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+let token = null;
+
+function login() {
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  fetch(API_BASE + "/api-token-auth/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: username, password: password })
+  })
+  .then(function(response) {
+    return response.json();
+  })
+  .then(function(data) {
+    token = data.token;
+    document.getElementById('login-section').style.display = "none";
+    document.getElementById('app').style.display = "block";
+    loadTasks();
+  });
+}
+
+function createTask() {
+  const title = document.getElementById('new-title').value;
+  const description = document.getElementById('new-description').value;
+
+  fetch(API_BASE + "/tasks/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Token " + token
+    },
+    body: JSON.stringify({ title: title, description: description, completed: false })
+  })
+  .then(function(response) {
+    return response.json();
+  })
+  .then(function(data) {
+    document.getElementById('new-title').value = "";
+    document.getElementById('new-description').value = "";
+    loadTasks();
+  });
+}
+
+function loadTasks() {
+  const search = document.getElementById('search-box').value;
+  let url = API_BASE + "/tasks/";
+  if (search) {
+    url = url + "?search=" + search;
+  }
+
+  fetch(url, {
+    headers: { "Authorization": "Token " + token }
+  })
+  .then(function(response) {
+    return response.json();
+  })
+  .then(function(data) {
+    const tasks = data.results;
+    renderTasks(tasks);
+  });
+}
+
+function renderTasks(tasks) {
+  const listDiv = document.getElementById('task-list');
+
+  if (tasks.length === 0) {
+    listDiv.innerHTML = "No tasks found.";
+    return;
+  }
+
+  let html = "";
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+    html = html + "<div>";
+    html = html + "<strong>" + task.title + "</strong>";
+    html = html + " - " + task.description;
+    html = html + " [" + (task.completed ? "Completed" : "Pending") + "]";
+    html = html + " <select onchange='statusChanged(" + task.id + ", this.value)'>";
+    html = html + "<option value='pending'" + (!task.completed ? " selected" : "") + ">Pending</option>";
+    html = html + "<option value='completed'" + (task.completed ? " selected" : "") + ">Completed</option>";
+    html = html + "</select>";
+    html = html + " <button onclick='deleteTask(" + task.id + ")' style='width:auto; display:inline-block; padding:4px 8px;'>Delete</button>";
+    html = html + "</div>";
+  }
+
+  listDiv.innerHTML = html;
+}
+
+function deleteTask(id) {
+  fetch(API_BASE + "/tasks/" + id + "/", {
+    method: "DELETE",
+    headers: { "Authorization": "Token " + token }
+  })
+  .then(function(response) {
+    loadTasks();
+  });
+}
+
+function statusChanged(id, newValue) {
+  const isCompleted = (newValue === "completed");
+  fetch(API_BASE + "/tasks/" + id + "/", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Token " + token
+    },
+    body: JSON.stringify({ completed: isCompleted })
+  })
+  .then(function(response) {
+    loadTasks();
+  });
+}
+</script>
+
+</body>
+</html>
