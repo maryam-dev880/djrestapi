@@ -184,6 +184,14 @@ function statusChanged(id, newValue) {
     loadTasks();
   });
 }
+
+function logout() {
+  token = null;
+  document.getElementById('app').style.display = "none";
+  document.getElementById('login-section').style.display = "block";
+  document.getElementById('username').value = "";
+  document.getElementById('password').value = "";
+}
 </script>
 
 </body>
